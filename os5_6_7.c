@@ -1,25 +1,33 @@
 /* duplicates in an array os5.c*/
+
 #include <stdio.h>
 
-int main(){
-	int i,j,l,r=0;
-	int arr[5]={10,45,15,10,25};
-	l=sizeof(arr)/sizeof(arr[0]);
-	for(i=0;i<l;i++){
-		for(j=i+1;j<l;j++){
-			if(arr[i]==arr[j]){
-				printf("duplicate found at %d\n",j+1);
-				r++;
-			}
-		}
-	}
-	printf("no of duplicates: %d\n",r);
-	if(r==0){
-		printf("dupli not found!");
-	}
-	
+void findDuplicates(int arr[], int size) {
+    printf("Duplicate elements in the array are: ");
+    int count = 0;
+    for (int i = 0; i < size; i++) {
+        int duplicate = 0;
+        for (int j = i + 1; j < size; j++) {
+            if (arr[i] == arr[j]) {
+                duplicate = 1;
+                break;
+            }
+        }
+        if (duplicate) {
+            printf("%d ", arr[i]);
+            count++;
+        }
+    }
+    printf("\nTotal number of duplicates: %d\n", count);
+}
 
-	return 0;
+int main() {
+    int arr[] = {1, 2, 3, 4, 4, 5, 6, 7, 7, 8};
+    int size = sizeof(arr) / sizeof(arr[0]);
+    
+    findDuplicates(arr, size);
+    
+    return 0;
 }
 
 ================================================
