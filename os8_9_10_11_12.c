@@ -244,6 +244,7 @@ int main() {
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <sys/wait.h>
 
 int main() {
     pid_t child_pid = fork();
@@ -251,12 +252,13 @@ int main() {
     if (child_pid == 0) {
         // Child process
         printf("Child process (PID: %d) started\n", getpid());
-        sleep(5); // Simulate some work being done by the child process
-        printf("\nChild process (PID: %d) exiting\n", getppid());
+        sleep(5); // Sleep for 5 seconds to ensure parent exits first
+        printf("Child process (PPID: %d) after parent exit\n", getppid()); // Print PPID
         exit(0);
     } else if (child_pid > 0) {
         // Parent process
         printf("Parent process (PID: %d) created child process (PID: %d)\n", getpid(), child_pid);
+        sleep(3); // Sleep for 3 seconds to simulate work and then exit
         printf("Parent process (PID: %d) exiting\n", getpid());
         exit(0);
     } else {
@@ -264,6 +266,9 @@ int main() {
         printf("Fork error\n");
         exit(1);
     }
+
+    // Uncomment this line to wait for the child process to exit (optional)
+    // wait(NULL);
 
     return 0;
 }
