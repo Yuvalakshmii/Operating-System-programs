@@ -3,148 +3,96 @@
 #include <unistd.h>
 #include <pthread.h>
 
-void *thread_function(void *arg) {
-    // Get the thread ID using pthread_self()
-    pthread_t tid = pthread_self();
+void *thread_func(void *arg) {
+    //pthread_t tid = pthread_self();
 
-    // Print the unique thread ID and message
-    printf("Thread %ld: %s\n", (long)tid, (char *)arg);
-
-    // Simulate some work to demonstrate thread execution
-    sleep(1); // Sleep for 1 second
-
+    printf("Thread %ld: %s\n", (long)pthread_self(), (char *)arg);
+    sleep(1);
     return NULL;
 }
 
 int main() {
-    pthread_t thread1, thread2;
-    int status;
+    pthread_t t1, t2;
+    #define HANDLE_ERROR(msg) do { perror(msg); exit(0); } while (0)
 
-    // Create the first thread with the message "First Thread"
-    status = pthread_create(&thread1, NULL, thread_function, "First Thread");
-    if (status != 0) {
-        perror("pthread_create failed");
-        exit(0);
+    if (pthread_create(&t1, NULL, thread_func, "First Thread")) {
+        HANDLE_ERROR("pthread_create failed");
     }
 
-    // Create the second thread with the message "Second Thread"
-    status = pthread_create(&thread2, NULL, thread_function, "Second Thread");
-    if (status != 0) {
-        perror("pthread_create failed");
-        exit(0);
+    if (pthread_create(&t2, NULL, thread_func, "Second Thread")) {
+        HANDLE_ERROR("pthread_create failed");
     }
 
-    // Wait for both threads to finish
-    status = pthread_join(thread1, NULL);
-    if (status != 0) {
-        perror("pthread_join failed");
-        exit(0);
-    }
-
-    status = pthread_join(thread2, NULL);
-    if (status != 0) {
-        perror("pthread_join failed");
-        exit(0);
-    }
-
-    //printf("Main thread: Both threads have finished.\n");
+    pthread_join(t1, NULL);
+    pthread_join(t2, NULL);
 
     return 0;
 }
 ======================================================================
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
 #include <string.h>
+#include <unistd.h>
+
+#define HANDLE_ERROR(msg) do {perror(msg); exit(0); } while(0)
 
 void *thread_function(void *arg) {
-    char *full_string = (char *)arg;
 
-    printf("Thread (ID: %ld): Received string: %s\n", pthread_self(), full_string);
+    char *str=arg;
+    printf("Thread (ID: %ld): Received string: %s\n",(long)pthread_self(), str);
 
-    // Extract and print name and register number
-    char *name_end = strstr(full_string, ":");
-    if (!name_end) {
-        printf("Error: Invalid string format\n");
-        return NULL;
-    }
+    char *name = strtok(str, ",");
+    char *regno = strtok(NULL, ",");
 
-    *name_end = '\0'; // Temporarily terminate name string
-    printf("Name: %s\n", full_string);
-
-    char *register_number = name_end + 1;
-    printf("Register number: %s\n", register_number);
+    printf("Name: %s\nRegister number: %s\n",name, regno);
 
     return NULL;
 }
 
 int main() {
-    char full_string[100];
+    char str[100];
 
-    printf("Enter your name and register number separated by a colon (e.g., John Doe:12345): ");
-    fgets(full_string, sizeof(full_string), stdin);
+    printf("Enter your name,register number: ");
+    fgets(str, sizeof(str), stdin);
+    str[strcspn(str, "\n")] = '\0';
 
-    // Remove trailing newline from user input
-    full_string[strcspn(full_string, "\n")] = '\0';
-
-    pthread_t thread;
-    int status = pthread_create(&thread, NULL, thread_function, full_string);
-    if (status != 0) {
-        perror("pthread_create failed");
-        exit(EXIT_FAILURE);
-    }
-
-    status = pthread_join(thread, NULL);
-    if (status != 0) {
-        perror("pthread_join failed");
-        exit(EXIT_FAILURE);
-    }
-
+    pthread_t t;
+    if (pthread_create(&t, NULL, thread_function, str)) HANDLE_ERROR("pthread_create failed");
+    if (pthread_join(t, NULL)) HANDLE_ERROR("pthread_join failed");
     return 0;
 }
 ====================================================================
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include <unistd.h>
+
+int isTerminated = 0;
 
 void *thread_function(void *arg) {
-    printf("Thread (ID: %ld) started\n", pthread_self());
-
-    // Simulate some work
-    for (int i = 0; i < 5; i++) {
-        printf("Thread: Iteration %d\n", i + 1);
+    printf("Thread (ID: %ld) started\n", (long)pthread_self());
+    while (!isTerminated) {
+        printf("Thread is running...\n");
     }
 
-    printf("Thread (ID: %ld) terminating using pthread_exit\n", pthread_self());
-    pthread_exit(NULL);  // Explicitly terminate the thread
+    printf("Thread is terminating...\n");
+    pthread_exit(NULL);
 }
 
 int main() {
     pthread_t thread;
 
-    int status = pthread_create(&thread, NULL, thread_function, NULL);
-    if (status != 0) {
-        perror("pthread_create failed");
-        exit(EXIT_FAILURE);
-    }
+    pthread_create(&thread, NULL, thread_function, NULL);
 
-    printf("Main thread continuing...\n");
+    sleep(1);
 
-    // Do some work in the main thread
-    for (int i = 0; i < 3; i++) {
-        printf("Main thread: Iteration %d\n", i + 1);
-    }
+    isTerminated = 1;
 
-    printf("Main thread waiting for thread to finish...\n");
-
-    status = pthread_join(thread, NULL);  // Wait for the thread to terminate
-    if (status != 0) {
-        perror("pthread_join failed");
-        exit(EXIT_FAILURE);
-    }
+    pthread_join(thread, NULL);
 
     printf("Main thread exiting\n");
     return 0;
 }
+
 ====================================================================================
